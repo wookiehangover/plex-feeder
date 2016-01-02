@@ -1,0 +1,27 @@
+main {
+  width: 100%;
+  max-width: 36em;
+  margin: 0 auto;
+}
+
+main * {
+  box-sizing: border-box;
+}
+
+.create-download {
+  margin: 2rem 1rem;
+}
+
+.control-group {
+  margin: 1rem 0;
+}
+
+.control-group input[type="text"] {
+  width: 100%;
+  padding: .8rem;
+  border: 1px solid lightblue;
+}
+
+.control-group input[type="text"].form-control-sm {
+  width: 6rem;
+}

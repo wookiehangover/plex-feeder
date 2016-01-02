@@ -1,0 +1,19 @@
+{
+  "name": "plex-feeder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "good": "^6.4.0",
+    "good-console": "^5.2.0",
+    "hapi": "^11.1.4",
+    "inert": "^3.2.0",
+    "joi": "^7.1.0"
+  }
+}

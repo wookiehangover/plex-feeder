@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>Plex Feeder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main id="main">
+      <form class="create-download" method="POST" action="download">
+        <div class="control-group">
+          <input type="text" name="url" placeholder="Put.io download link..." required/>
+        </div>
+        <div class="control-group">
+          <input type="text" name="title" placeholder="Title" required/>
+        </div>
+        <div class="control-group">
+          <input type="text" class="form-control-sm" name="year" placeholder="Year" pattern="\d{4}" required/>
+          <select name="type" required>
+            <option>Movies</option>
+            <option>TV</option>
+          </select>
+        </div>
+        <button>Submit</button>
+      </form>
+    </main>
+  </body>
+</html>
