@@ -20,15 +20,23 @@ const plugins = [
   require('inert')
 ]
 
-function downloadMovie(payload) {
+function download(payload) {
   const options = {
-    cwd: '/treehouse/Media/Movies',
     maxBuffer: 1024e10
+  }
+
+  let directory = payload.directory
+
+  if (payload.type === 'Movies') {
+    directory = `${title} [${payload.directory}]`
+    options.cwd = '/treehouse/Media/Movies'
+  } else {
+    options.cwd = '/treehouse/Media/TV Shows'
   }
 
   const child = execFile(
     path.join(__dirname, 'scripts', 'download.sh'),
-    [ payload.url, payload.title, payload.year ],
+    [ payload.url, payload.title, directory ],
     options,
     (err) => {
       if (err) {
@@ -55,8 +63,8 @@ server.register(plugins, err => {
           payload: {
             title: Joi.string(),
             url: Joi.string(),
-            type: Joi.string().valid(['Movies', 'TV']),
-            year: Joi.number()
+            directory: Joi.string().default('.'),
+            type: Joi.string().valid(['Movies', 'TV'])
           }
         }
       },
