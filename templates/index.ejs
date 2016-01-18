@@ -25,7 +25,14 @@
         </div>
         <button>Submit</button>
       </form>
+      <section id="downloads"></section>
     </main>
 
+    <script>
+      window._ACTIVE_DOWNLOADS = <%= JSON.stringify(downloads) %>;
+    </script>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>

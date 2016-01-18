@@ -44,8 +44,13 @@ button {
   border-radius: 0.3rem;
 }
 
-.progress-bar {
+.DownloadList {
+  list-style: none;
+}
+
+.ProgressBar {
   background: aquamarine;
+  width: 0%;
   display: block;
   height: 1em;
   color: white;
