@@ -20,4 +20,4 @@ echo "Preparing to download $title"
 mkdir -p "$dir"
 
 echo "Saving file to $dir/$filename"
-wget -c $url -O "$download_dir/$filename"
+wget -c $url -O "$dir/$filename"
