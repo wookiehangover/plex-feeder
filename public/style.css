@@ -44,6 +44,14 @@ button {
   border-radius: 0.3rem;
 }
 
+.progress-bar {
+  background: aquamarine;
+  display: block;
+  height: 1em;
+  color: white;
+  font-weight: bold;
+}
+
 @media (max-width: 36rem) {
   button {
     width: 100%;

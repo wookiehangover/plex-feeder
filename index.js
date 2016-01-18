@@ -4,6 +4,7 @@ const Hapi = require('hapi')
 const Joi = require('joi')
 const path = require('path')
 const execFile = require('child_process').execFile
+const uuid = require('uuid')
 const server = new Hapi.Server()
 server.connection({ port: process.env.PORT || 3000 })
 
@@ -17,67 +18,88 @@ const plugins = [
       }]
     }
   },
+  require('vision'),
   require('inert'),
   require('hapi-io')
 ]
 
+function createDownload(payload) {
+  const options = {
+    maxBuffer: 1024e10
+  }
 
+  let directory = payload.directory
 
+  if (payload.type === 'Movies') {
+    directory = `${payload.title} [${payload.directory}]`
+    options.cwd = '/treehouse/Media/Movies'
+  } else {
+    options.cwd = '/treehouse/Media/TV Shows'
+  }
 
+  const child = execFile(
+    path.join(__dirname, 'scripts', 'download.sh'),
+    [ payload.url, payload.title, directory ],
+    options
+  )
+
+  const id = uuid.v1()
+
+  registerDownload(id, payload, child)
+
+  return child
+}
+
+let downloadHandlers = []
+function registerDownload(id, payload, child) {
+  const download = {
+    id, payload, child
+  }
+
+  downloadHandlers.push(download)
+
+  child.stdout.on('end', function() {
+    let index = downloadHandlers.indexOf(download)
+    downloadHandlers = downloadHandlers.slice(index, index + 1)
+  })
+}
 
 server.register(plugins, err => {
   if (err) throw err
 
+  server.views({
+    engines: { ejs: require('ejs') },
+    relativeTo: __dirname,
+    path: 'templates'
+  })
+
   const io = server.plugins['hapi-io'].io
 
-  function download(payload, done) {
-    const options = {
-      maxBuffer: 1024e10
-    }
-
-    let directory = payload.directory
-
-    if (payload.type === 'Movies') {
-      directory = `${payload.title} [${payload.directory}]`
-      options.cwd = '/treehouse/Media/Movies'
-    } else {
-      options.cwd = '/treehouse/Media/TV Shows'
-    }
-
-    const child = execFile(
-      path.join(__dirname, 'scripts', 'download.sh'),
-      [ payload.url, payload.title, directory ],
-      options
-    )
-
-    // child.stdout.pipe(process.stdout)
-    // child.stderr.pipe(process.stderr)
-
-    child.stdout.on('data', (data) => console.log(data.toString))
-
-    io.on('connection', socket => {
-      console.log('client connected')
-      child.stdout.on('socket[data]', chunk => {
-        console.log('data event')
+  io.on('connection', function(socket) {
+    downloadHandlers.forEach(function(download) {
+      function progress(chunk) {
         socket.emit('progress', {
           progress: chunk.toString(),
-          title: payload.title
+          payload: download.payload
         })
-      })
+      }
 
-      child.stdout.on('end', _ => {
-        console.log('download complete')
+      download.child.stderr.on('data', progress)
+      download.child.stdout.on('data', progress)
+
+      download.child.stdout.on('end', function() {
         socket.emit('progress', {
           progress: `Download Complete`,
-          title: payload.title
+          payload: download.payload
         })
       })
     })
+  })
 
+  server.method('download', function (payload, done) {
+    const child = createDownload(payload)
     done(null, child)
-  }
-
-  server.method('download', download)
+  })
 
   server.route([
     {
@@ -99,8 +121,8 @@ server.register(plugins, err => {
           }
         ]
       },
-      handler: {
-        file: 'public/download.html'
+      handler: function(request, reply) {
+        reply.view('download', request.payload)
       }
     },
     {

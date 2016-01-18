@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>Plex Feeder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main id="main">
+      <h1><%= title %></h1>
+      <div id="progress" class="progress-bar"></div>
+      <pre id="output"></pre>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      (function(socket) {
+        'use strict'
+
+        var progress = ''
+        var output = document.getElementById('output')
+        var progressBar = document.getElementById('progress')
+
+        socket.on('progress', function (data) {
+          progress = data.progress
+        })
+
+        function draw() {
+          var percent = progress.match(/\d+%/)
+          if (percent && percent[0]) {
+            progressBar.style.width = percent[0]
+            progressBar.innerHTML = percent[0]
+          } else {
+            output.innerHTML = progress
+          }
+
+          if (progress === 'Download Complete') {
+            output.innerHTML = progress
+            progressBar.innerHTML = '100%'
+            progressBar.style.width = '100%'
+            return
+          }
+
+          setTimeout(draw, 200)
+        }
+
+        draw()
+      })( io.connect(location.origin) )
+    </script>
+  </body>
+</html>
