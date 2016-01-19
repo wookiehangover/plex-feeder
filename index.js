@@ -1,18 +1,19 @@
 'use strict'
 
-const Hapi = require('hapi')
 const Joi = require('joi')
+const uuid = require('uuid')
+const find = require('lodash/find')
+const map = require('lodash/map')
 const path = require('path')
 const execFile = require('child_process').execFile
-const uuid = require('uuid')
-const map = require('lodash/map')
+const Hapi = require('hapi')
 const server = new Hapi.Server()
-
-let downloadHandlers = []
 
 server.connection({
   port: process.env.PORT || 3000
 })
+
+const downloadHandlers = []
 
 // Launches a download script (wget) and registers the active download
 //
@@ -41,7 +42,7 @@ function createDownload(payload) {
 
   registerDownload(id, payload, child)
 
-  return child
+  return id
 }
 
 // Create a global entry for the active download, removing itself when the
@@ -52,34 +53,43 @@ function registerDownload(id, payload, child) {
   }
 
   downloadHandlers.push(download)
+}
 
-  child.stdout.on('end', function() {
+function subscribe(socket, download) {
+  function progress(chunk) {
+    socket.emit('progress', {
+      progress: chunk.toString(),
+      payload: download.payload,
+      id: download.id
+    })
+  }
+
+  download.child.stderr.on('data', progress)
+  download.child.stdout.on('data', progress)
+
+  download.child.stdout.on('end', function() {
+    socket.emit('progress', {
+      progress: `Download Complete`,
+      payload: download.payload,
+      id: download.id,
+      destroy: true
+    })
+
     let index = downloadHandlers.indexOf(download)
-    downloadHandlers = downloadHandlers.slice(index, index + 1)
+    downloadHandlers.splice(index, 1)
   })
 }
 
 // Pipe any live download handers to the incoming socket connection
 function broadcastProgress(socket) {
-  downloadHandlers.forEach(function(download) {
-    function progress(chunk) {
-      socket.emit('progress', {
-        progress: chunk.toString(),
-        payload: download.payload,
-        id: download.id
-      })
+  downloadHandlers.forEach(subscribe.bind(null, socket))
+
+  socket.on('register', (download) => {
+    const handler = find(downloadHandlers, { id: download.id })
+    console.log(download)
+    if (handler) {
+      subscribe(socket, handler)
     }
-
-    download.child.stderr.on('data', progress)
-    download.child.stdout.on('data', progress)
-
-    download.child.stdout.on('end', function() {
-      socket.emit('progress', {
-        progress: `Download Complete`,
-        payload: download.payload,
-        id: download.id
-      })
-    })
   })
 }
 
@@ -108,12 +118,11 @@ server.register(plugins, err => {
   })
 
   const io = server.plugins['hapi-io'].io
-
   io.on('connection', broadcastProgress)
 
-  server.method('download', function (payload, done) {
-    const child = createDownload(payload)
-    done(null, child)
+  server.method('download', function(payload, next) {
+    const id = createDownload(payload)
+    next(null, id)
   })
 
   server.route([
@@ -132,20 +141,28 @@ server.register(plugins, err => {
         pre: [
           {
             method: 'download(payload)',
-            assign: 'child'
+            assign: 'id'
           }
         ]
       },
       handler: function(request, reply) {
-        reply.redirect('/')
+        const response = reply({
+          payload: request.payload,
+          id: request.pre.id
+        })
+        response.statusCode = 201
+        return response
       }
     },
     {
       method: 'GET',
       path: '/',
       handler: function(request, reply) {
+        const downloads = map(downloadHandlers, download => {
+          return { id: download.id, payload: download.payload }
+        })
         reply.view('index', {
-          downloads: map(downloadHandlers, 'payload')
+          downloads
         })
       }
     },

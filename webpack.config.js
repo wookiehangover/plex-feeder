@@ -2,13 +2,17 @@
 
 const webpack = require('webpack')
 
-let plugins = [
+let basePlugins = [
+  new webpack.ProvidePlugin({
+    'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+  }),
   new webpack.optimize.DedupePlugin()
 ]
 
+let plugins = basePlugins
+
 if (process.env.NODE_ENV === 'production') {
-  plugins = [
-    new webpack.optimize.DedupePlugin(),
+  plugins = basePlugins.concat([
     new webpack.DefinePlugin({
       'process.env':{
         'NODE_ENV': JSON.stringify('production')
@@ -19,7 +23,7 @@ if (process.env.NODE_ENV === 'production') {
         warnings: false
       }
     })
-  ]
+  ])
 }
 
 module.exports = {

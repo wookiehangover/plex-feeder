@@ -12,10 +12,12 @@
   "license": "ISC",
   "dependencies": {
     "ejs": "^2.3.4",
+    "exports-loader": "^0.6.2",
     "good": "^6.4.0",
     "good-console": "^5.2.0",
     "hapi": "^11.1.4",
     "hapi-io": "0.0.11",
+    "imports-loader": "^0.6.5",
     "inert": "^3.2.0",
     "joi": "^7.1.0",
     "lodash": "^4.0.0",
@@ -30,6 +32,7 @@
     "babel-preset-react": "^6.3.13",
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
-    "webpack": "^1.12.11"
+    "webpack": "^1.12.11",
+    "whatwg-fetch": "^0.10.1"
   }
 }

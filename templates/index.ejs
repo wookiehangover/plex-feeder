@@ -9,27 +9,12 @@
   </head>
   <body>
     <main id="main">
-      <form class="create-download" method="POST" action="download">
-        <div class="control-group">
-          <input type="text" name="url" placeholder="Put.io download link..." required/>
-        </div>
-        <div class="control-group">
-          <input type="text" name="title" placeholder="Title" required/>
-        </div>
-        <div class="control-group">
-          <input type="text" class="form-control-sm" name="directory" placeholder="Directory" required/>
-          <select name="type" class="form-control-sm" required>
-            <option>Movies</option>
-            <option>TV</option>
-          </select>
-        </div>
-        <button>Submit</button>
-      </form>
+      <section id="form"></section>
       <section id="downloads"></section>
     </main>
 
     <script>
-      window._ACTIVE_DOWNLOADS = <%= JSON.stringify(downloads) %>;
+      window._ACTIVE_DOWNLOADS = <%- JSON.stringify(downloads) %>;
     </script>
 
     <script src="/socket.io/socket.io.js"></script>

@@ -13,7 +13,7 @@ html {
 }
 
 .create-download {
-  margin: 2rem 1rem;
+  margin: 2rem 0;
 }
 
 .control-group {
@@ -46,6 +46,7 @@ button {
 
 .DownloadList {
   list-style: none;
+  padding: 0;
 }
 
 .ProgressBar {

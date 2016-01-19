@@ -1,32 +1,55 @@
 import React from 'react'
 import { render } from 'react-dom'
 import find from 'lodash/find'
+import throttle from 'lodash/throttle'
+import Form from './Form.jsx'
 
 const io = window.io
 const socket = io.connect(location.host)
-const activeDownloads = window._ACTIVE_DOWNLOADS || []
 const container = document.getElementById('downloads')
+let activeDownloads = window._ACTIVE_DOWNLOADS || []
 
 const Downloads = React.createClass({
   render() {
     return (
       <ul className="DownloadList">
-        {this.props.data.map(download =>
-          <li>
-            <h1>{download.payload.title}</h1>
-            <div className="ProgressBar" style={{ width: download.percent }}></div>
-            <pre>{download.progress || ''}</pre>
-          </li>
-        )}
+        {this.props.data.map(download => {
+          return (
+            <li key={download.id}>
+              <h1>{download.payload.title}</h1>
+              <div className="ProgressBar" style={{ width: download.percent }}></div>
+              <pre>{download.progress || ''}</pre>
+            </li>
+          )
+        })}
       </ul>
     )
   }
 })
 
-render(<Downloads data={activeDownloads} />, container)
+function renderDownloads() {
+  render(<Downloads data={activeDownloads} />, container)
+}
 
-socket.on('progress', data => {
-  const file = find(activeDownloads, { id: data.id })
+render(
+  <Form onUpdate={download => {
+    activeDownloads.push(download)
+    renderDownloads()
+    socket.emit('register', download)
+  }} />,
+  document.getElementById('form')
+)
+
+renderDownloads()
+
+socket.on('progress', throttle(data => {
+  let file = find(activeDownloads, { id: data.id })
+
+  if (!file) {
+    file = data
+    activeDownloads.push(file)
+  }
+
   const percent = data.progress.match(/\d+%/)
 
   file.progress = data.progress
@@ -34,5 +57,13 @@ socket.on('progress', data => {
     file.percent = percent
   }
 
-  render(<Downloads data={activeDownloads} />, container)
-})
+  if (data.destroy) {
+    setTimeout(_ => {
+      let index = activeDownloads.indexOf(file)
+      activeDownloads.splice(index, 1)
+      renderDownloads()
+    }, 5000)
+  }
+
+  renderDownloads()
+}, 200))
